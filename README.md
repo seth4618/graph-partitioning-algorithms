@@ -166,6 +166,20 @@ example, the first edge from vertex 0 to vertex 1 has a weight of 1.
 
 The last 6 lines describe the vertex weights.
 
+More complete description:
+
+```
+<vertices>
+<edges>
+<pins>
+[<edges> descriptors, each one: <edge-weight> 2 <src-vertex> <dest-vertex>]
+[<vertices> descriptors, each one: <vertex-weight>]
+```
+
+<pins> = sum of all vertex degrees
+
+
+
 ## REFERENCE
 
 Please cite this reference if you use my programs in your research

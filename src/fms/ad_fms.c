@@ -4,7 +4,7 @@
 #include <assert.h>
 #include <stdio.h>
 #include <string.h>
-#include <malloc/malloc.h>
+#include <stdlib.h>
 #include "ad_defs.h"
 #include "ad_random.h"
 #include "ad_fileio.h"
