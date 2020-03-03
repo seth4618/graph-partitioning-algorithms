@@ -5,7 +5,7 @@ FLAGS1 = -O3
 FLAGS2 = -lm
 FLAGS3 = -std=c99 -Dlint -D__lint -Wall -Winline -Wno-deprecated -Wno-strict-overflow
 DIR_H = ../share
-FLAGS = $(FLAGS1) $(FLAGS3) -I$(DIR_H)
+FLAGS = $(FLAGS1) $(FLAGS3) -I$(DIR_H) -DDEBUG=1
 
 DEPS_SHARE = $(DIR_H)/ad_bucketio.h \
 	$(DIR_H)/ad_fileio.h \

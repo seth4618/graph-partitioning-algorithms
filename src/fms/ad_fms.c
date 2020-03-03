@@ -14,6 +14,100 @@
 #include "ad_bucketio.h"
 #include "ad_lib.h"
 #include "ad_lib_fms.h"
+#include <stdarg.h>
+
+void
+print_vertex_partition(FILE* outfile, 
+		       int nocells, 
+		       int noparts, 
+		       allele chrom[],
+		       parts_info_t parts_info[])
+{
+  fprintf(outfile, "[ ");
+  for (int v = 0; v < nocells; v++) {
+    fprintf(outfile, "%d%s ", chrom[v], ((v+1) < nocells) ? "," : "");
+  }
+  fprintf(outfile, "]\n");
+}
+
+
+const char* prog;
+const char* outfile = NULL;
+int verbose = 0;
+
+void usage(char* fmt, ...)
+{
+  va_list ap;
+
+  va_start(ap,fmt);
+  if ((fmt == NULL)||(fmt[0] != 0)) {
+    fprintf(stderr, "Usage Error:");
+    vfprintf(stderr, fmt, ap);
+  }
+  fprintf(stderr, "\n%s [-h][-H][-v][-o <fname>] inname <numparts> [seed]\n", prog);
+  fflush(stderr);
+  va_end(ap);
+  exit(-1);
+}
+
+const char** 
+processArgs(int *argcp, const char* argv[])
+{
+  // make copy of argv
+  int argc = *argcp;
+  const char** oldargv = calloc(argc, sizeof(char*));
+  int oldargc = argc;
+
+  for (int i=0; i<argc; i++) {
+    oldargv[i] = argv[i];
+  }
+  prog = argv[0];
+
+  // process all optional args
+  argc = 1;
+  int newargc = 1;
+  while (argc < oldargc) {
+    if (oldargv[argc][0] != '-') break;
+    switch (oldargv[argc][1]) {
+    case 'h':
+    case 'H':
+      usage("");
+    case 'v':
+      verbose = 1;
+      break;
+    case 'o':
+      if ( (argc+1) >= oldargc ) usage("-o requires filename");
+      outfile = oldargv[argc+1];
+      argc += 1;
+      break;
+    default:
+      usage("Unknown switch %s", oldargv[argc]);
+    }
+    argc++;
+  }
+
+  // copy over all remaining args
+  while (argc < oldargc) {
+    argv[newargc] = oldargv[argc];
+    newargc++;
+    argc++;
+  }
+  free(oldargv);
+  *argcp = newargc;
+  return argv;
+}
+
+void die(char* fmt, ...)
+{
+  va_list ap;
+
+  va_start(ap,fmt);
+  fprintf(stderr, "Error:");
+  vfprintf(stderr, fmt, ap);
+  fflush(stderr);
+  va_end(ap);
+  exit(-1);
+}
 
 /* FOR SANCHIS' VERSION OF MULTI-WAY PARTITIONING */
 /* Also mentioned as the SN algorithm */
@@ -22,7 +116,7 @@
    Cells are moved wrt their gains.
 */
 
-int main(int argc, char *argv[])
+int main(int argc, const char *argv[])
 {
     /* definitions */
     int nocells;           /* number of cells */
@@ -39,6 +133,9 @@ int main(int argc, char *argv[])
     int bucketsize;        /* max size of a bucket array */
     int msize;             /* index to mcells */
 
+    // add any new CLI features here and return something that is compatible with old program
+    argv = processArgs(&argc, argv);
+    
     if (argc < 3) {
         printf("\nUsage: %s InputFileName NoParts [Seed]\n", argv[0]);
         exit(1);
@@ -193,6 +290,19 @@ int main(int argc, char *argv[])
 
     printf("pass_no = %d Final cutsize = %d Check cutsize = %d\n", no_iter,
            cutsize, find_cut_size(nonets, totsize, nets, &pop[0]));
+
+    if (verbose) {
+      print_graph(nocells, nonets, noparts, cells, nets);
+
+      print_parts_info(nocells, noparts, pop[0].chrom, parts_info);
+    }
+
+    if (outfile != NULL) {
+      FILE* f = fopen(outfile, "w");
+      if (f == NULL) die("Could not open %s for writing partition", outfile);
+      print_vertex_partition(f, nocells, noparts, pop[0].chrom, parts_info);
+      fclose(f);
+    }
 
     free_nodes(noparts, bucketsize, partb);
 
